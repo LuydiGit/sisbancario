@@ -46,6 +46,25 @@ app.get('/', (req, res) => {
   });
 });
 
+//Criar conta
+app.post('/api/v1/conta', (req, res) =>{
+const { name, cpf, data_nascimento, email, celular, senha } = req.body;
+
+const sql = `INSERT INTO clientes (name, cpf, data_nascimento, email, celular, senha) VALUES (?, ?, ?, ?, ?, ?)`;
+const values = [name, cpf, data_nascimento, email, celular, senha];
+
+  // Execute a query com seu gerenciador de banco de dados
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error("Erro ao inserir dados:", err);
+      return res.status(500).send("Erro no servidor");
+    } 
+    if(result) {
+      return res.status(200).send("Dados inseridos com sucesso");
+    }
+  });
+})
+
 // Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`API Banco 1 rodando na porta ${PORT}`);
