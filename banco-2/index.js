@@ -37,7 +37,14 @@ app.use(bodyParser.json());
 
 // Rotas
 app.get('/', (req, res) => {
-  res.status(200).send('API funcionando!');
+  db.query('SELECT * FROM clientes', (err, results) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    console.log(results)
+    res.status(200).json(results);
+  });
 });
 
 // Iniciar o servidor
