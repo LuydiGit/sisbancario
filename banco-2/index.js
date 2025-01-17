@@ -9,7 +9,8 @@ import dotenv from 'dotenv';
 // Carregar variáveis de ambiente
 dotenv.config();
 
-// Criar conexão com o banco de dados MySQL
+//============== Conexão com o DB do Banco 1 ==============
+// Criando conexão
 const db = mysql.createConnection({
   host: process.env.DB_HOST,  // Exemplo: localhost ou IP do seu servidor
   user: process.env.DB_USER,  // Seu usuário do MySQL
@@ -24,6 +25,24 @@ db.connect((err) => {
     return;
   }
   console.log('Conectado ao banco de dados MySQL');
+});
+
+//============== Conexão com o DB do Banco Central ==============
+// Criando conexão
+const db_bc = mysql.createConnection({
+  host: process.env.DB_HOST_BC,  
+  user: process.env.DB_USER_BC, 
+  password: process.env.DB_PASSWORD_BC,
+  database: process.env.DB_NAME_BC
+});
+
+// Verificar a conexão com o banco de dados do
+db_bc.connect((err) => {
+  if (err) {
+    console.error('Erro ao conectar com o banco de dados do BC:', err);
+    return;
+  }
+  console.log('Conectado ao banco de dados do BC');
 });
 
 const app = express();
@@ -67,6 +86,53 @@ app.post('/api/v1/conta', (req, res) => {
     }
   });
 });
+
+// Route to create a new Pix key
+app.post('/api/v1/pixKey', async (req, res) => {
+  const { bancoId, clientId, saldo, chavePix, tipo_chave_pix } = req.body;
+
+  // Validação dos campos obrigatórios
+  if (!bancoId || !clientId || !saldo || !chavePix || !tipo_chave_pix) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+  }
+
+  try {
+    // Insere os dados na tabela 'contas'
+    const sqlContas = `
+      INSERT INTO contas (cliente_id, saldo, chave_pix, tipo_chave_pix) 
+      VALUES (?, ?, ?, ?)
+    `;
+    const contasValues = [clientId, saldo, chavePix, tipo_chave_pix];
+
+    const resultContas = await new Promise((resolve, reject) => {
+      db.query(sqlContas, contasValues, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    // Insere os dados na tabela 'chaves_pix' no banco central
+    const sqlPixBC = `
+      INSERT INTO chaves_pix (banco_id, cliente_id, chave, tipo) 
+      VALUES (?, ?, ?, ?)
+    `;
+    const pixValues = [bancoId, clientId, chavePix, tipo_chave_pix];
+
+    const resultPixBC = await new Promise((resolve, reject) => {
+      db_bc.query(sqlPixBC, pixValues, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    // Resposta final
+    res.status(201).json({ message: "Chave Pix cadastrada com sucesso" });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ error: "Erro interno no servidor" });
+  }
+});
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
