@@ -32,6 +32,7 @@ const PORT = process.env.PORT || 5001;
 
 // Middlewares
 app.use(cors());
+app.use(express.json());
 app.use(bodyParser.json());
 
 // Rotas
@@ -46,24 +47,28 @@ app.get('/', (req, res) => {
   });
 });
 
-//Criar conta
-app.post('/api/v1/conta', (req, res) =>{
-const { name, cpf, data_nascimento, email, celular, senha } = req.body;
+//Route to create a new client
+app.post('/api/v1/conta', (req, res) => {
+  const { name, cpf, data_nascimento, email, celular, senha } = req.body;
 
-const sql = `INSERT INTO clientes (name, cpf, data_nascimento, email, celular, senha) VALUES (?, ?, ?, ?, ?, ?)`;
-const values = [name, cpf, data_nascimento, email, celular, senha];
+  if (!name || !cpf || !data_nascimento || !email || !celular || !senha) {
+    return res.status(400).send("Todos os campos são obrigatórios");
+  }
 
-  // Execute a query com seu gerenciador de banco de dados
+  const sql = `INSERT INTO clientes (nome, cpf, data_nascimento, email, celular, senha) VALUES (?, ?, ?, ?, ?, ?)`;
+  const values = [name, cpf, data_nascimento, email, celular, senha];
+
   db.query(sql, values, (err, result) => {
     if (err) {
       console.error("Erro ao inserir dados:", err);
       return res.status(500).send("Erro no servidor");
-    } 
-    if(result) {
+    }
+    if(result){
       return res.status(200).send("Dados inseridos com sucesso");
     }
   });
-})
+});
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {
