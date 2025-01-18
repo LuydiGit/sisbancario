@@ -39,10 +39,11 @@
     outline: none;
     color: #f6f6f6;
     height: 50px;
-    width: 300px;
+    width: 100%;
     font-size: 14px;
-    border-radius: 20px;
+    border-radius: 10px;
     margin-left: 15px;
+    margin-right: 10px;
 }
 .btn__add__chave__pix{
     background: transparent;
@@ -75,9 +76,68 @@
     padding: 5px;
     color: red;
 }
+.message__sucess{
+    display: flex;
+    background: rgba(0, 255, 0, 0.276);
+    margin-left: 15px;
+    margin-right: 15px;
+    border-radius: 10px;
+    padding: 5px;
+    color: green;
+}
 .icon__VscError{
     margin-top: 3px;
     margin-right: 5px;
     color: red;
     font-size: 20px;
+}
+.icon__FaRegCheckCircle{
+    margin-top: 3px;
+    margin-right: 5px;
+    color: green;
+    font-size: 20px;
+}
+.section__pix__cadastrado{
+    display: flex;
+    justify-content: space-between;
+    background: rgba(128, 128, 128, 0.445);
+    border-radius: 10px;
+    padding-left: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-left: 15px;
+    margin-right: 10px;
+    margin-top: 10px;
+}
+.icon__MdDeleteOutline{
+    font-size: 25px;
+    color: #530082;
+}
+.box__icon__MdDeleteOutline{
+    height: 100%;
+    margin-right: 10px;
+    margin-top: 10px;
+
+}
+.container__btn__delete__chave__pix{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 10px;
+}
+.btn__{
+    height: 45px;
+    width: 150px;
+    font-size: 14px;
+    border-radius: 10px;
+}
+.cancel{
+    background: #530082;
+    border: none;
+    outline: none;
+}
+.confirm{
+    background: transparent;
+    color: #530082;
+    border: 1px solid #530082;
 }

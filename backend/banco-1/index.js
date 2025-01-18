@@ -88,6 +88,34 @@ app.post('/api/v1/cliente', (req, res) => {
 
 });
 
+//Route to get pix key
+app.get('/api/v1/pixKey/:clientId', async (req, res) =>{
+  const clientId = req.params.clientId;
+
+  try {
+    // Obten a chave pix do cliente
+    const sql = `
+      SELECT chave_pix, tipo_chave_pix FROM contas WHERE cliente_id = ?;
+    `;
+    const resultPixKey = await new Promise((resolve, reject) => {
+      db.query(sql, [clientId], (err, results) => {
+        if (err) {
+          return reject(err); // Rejeita a promessa em caso de erro na consulta
+        }
+        if (results.length < 1) {
+          return reject(new Error("Nenhum resultado encontrado para o cliente especificado")); // Rejeita com mensagem específica
+        }
+        resolve(results); // Resolve a promessa com os resultados
+      });
+    });
+
+    return res.status(200).json({ result: resultPixKey });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro interno no servidor" });
+  }
+})
+
 // Route to create a new Pix key
 app.post('/api/v1/pixKey', async (req, res) => {
   const { bancoId, clientId, saldo, chavePix, tipo_chave_pix } = req.body;
@@ -168,6 +196,79 @@ app.post('/api/v1/pixKey', async (req, res) => {
   }
 });
 
+// Route to delete Pix key
+app.delete('/api/v1/pixKey', async (req, res) => {
+  const { chavePix } = req.query;
+
+  // Validação do campo obrigatório
+  if (!chavePix) {
+    return res.status(400).json({ message: "O campo 'chavePix' é obrigatório." });
+  }
+
+  try {
+    // Verifica se a chave Pix existe na tabela 'contas'
+    const checkPixSqlContas = `
+      SELECT * FROM contas WHERE chave_pix = ?;
+    `;
+    const existingPixContas = await new Promise((resolve, reject) => {
+      db.query(checkPixSqlContas, [chavePix], (err, results) => {
+        if (err) return reject(err);
+        resolve(results.length > 0);
+      });
+    });
+
+    if (!existingPixContas) {
+      return res.status(404).json({ message: "Chave Pix não encontrada na tabela 'contas'." });
+    }
+
+    // Verifica se a chave Pix existe na tabela 'chaves_pix' no banco central
+    const checkPixSqlBC = `
+      SELECT * FROM chaves_pix WHERE chave = ?;
+    `;
+    const existingPixBC = await new Promise((resolve, reject) => {
+      db_bc.query(checkPixSqlBC, [chavePix], (err, results) => {
+        if (err) return reject(err);
+        resolve(results.length > 0);
+      });
+    });
+
+    if (!existingPixBC) {
+      return res.status(404).json({ message: "Chave Pix não encontrada no banco central." });
+    }
+
+    // Deleta a chave Pix da tabela 'contas'
+    const deletePixSqlContas = `
+      DELETE FROM contas WHERE chave_pix = ?
+    `;
+    await new Promise((resolve, reject) => {
+      db.query(deletePixSqlContas, [chavePix], (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    console.log("Chave Pix deletada da tabela 'contas'.");
+
+    // Deleta a chave Pix da tabela 'chaves_pix' no banco central
+    const deletePixSqlBC = `
+      DELETE FROM chaves_pix WHERE chave = ?
+    `;
+    await new Promise((resolve, reject) => {
+      db_bc.query(deletePixSqlBC, [chavePix], (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    console.log("Chave Pix deletada do banco central.");
+
+    // Resposta final
+    res.status(200).json({ message: "Chave Pix deletada com sucesso." });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro ao tentar apagar chave pix." });
+  }
+});
 
 // Iniciar o servidor
 app.listen(PORT, () => {
