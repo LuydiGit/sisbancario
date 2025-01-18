@@ -66,7 +66,7 @@ app.get('/', (req, res) => {
 });
 
 //Route to create a new client
-app.post('/api/v1/conta', (req, res) => {
+app.post('/api/v1/cliente', (req, res) => {
   const { name, cpf, data_nascimento, email, celular, senha } = req.body;
 
   if (!name || !cpf || !data_nascimento || !email || !celular || !senha) {
@@ -94,10 +94,40 @@ app.post('/api/v1/pixKey', async (req, res) => {
 
   // Validação dos campos obrigatórios
   if (!bancoId || !clientId || !saldo || !chavePix || !tipo_chave_pix) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+    return res.status(400).json({ message: "Todos os campos são obrigatórios" });
   }
 
   try {
+    // Verifica se a chave Pix já está cadastrada na tabela 'contas'
+    const checkPixSqlContas = `
+      SELECT * FROM contas WHERE chave_pix = ? LIMIT 1
+    `;
+    const existingPixContas = await new Promise((resolve, reject) => {
+      db.query(checkPixSqlContas, [chavePix], (err, results) => {
+        if (err) return reject(err);
+        resolve(results.length > 0);
+      });
+    });
+
+    if (existingPixContas) {
+      return res.status(409).json({ message: "Já existe uma chave Pix cadastrada com o mesmo valor." });
+    }
+
+    // Verifica se a chave Pix já está cadastrada no banco central
+    const checkPixSqlBC = `
+      SELECT * FROM chaves_pix WHERE chave = ? LIMIT 1
+    `;
+    const existingPixBC = await new Promise((resolve, reject) => {
+      db_bc.query(checkPixSqlBC, [chavePix], (err, results) => {
+        if (err) return reject(err);
+        resolve(results.length > 0);
+      });
+    });
+
+    if (existingPixBC) {
+      return res.status(409).json({ message: "A chave Pix já está cadastrada no banco central" });
+    }
+
     // Insere os dados na tabela 'contas'
     const sqlContas = `
       INSERT INTO contas (cliente_id, saldo, chave_pix, tipo_chave_pix) 
@@ -111,6 +141,8 @@ app.post('/api/v1/pixKey', async (req, res) => {
         resolve(result);
       });
     });
+
+    console.log("Dados inseridos na tabela 'contas':", resultContas);
 
     // Insere os dados na tabela 'chaves_pix' no banco central
     const sqlPixBC = `
@@ -126,13 +158,16 @@ app.post('/api/v1/pixKey', async (req, res) => {
       });
     });
 
+    console.log("Dados inseridos no banco central:", resultPixBC);
+
     // Resposta final
     res.status(201).json({ message: "Chave Pix cadastrada com sucesso" });
   } catch (error) {
     console.error("Erro ao processar a requisição:", error);
-    res.status(500).json({ error: "Erro interno no servidor" });
+    res.status(500).json({ message: "Erro interno no servidor" });
   }
 });
+
 
 // Iniciar o servidor
 app.listen(PORT, () => {

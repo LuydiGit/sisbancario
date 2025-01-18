@@ -1,0 +1,83 @@
+.header__main__area__pix{
+    height: 130px;
+    border: none;
+    border-bottom: 1px solid gray;
+}
+.box__close__and__question{
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+}
+.icon__close__and__question{
+    color: black;
+    font-size: 30px
+}
+.sectio__pix__area__pix{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid gray;
+}
+
+.section__add__chave__pix{
+    padding-top: 20px;
+}
+.box__btn__add__chave__pix{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+}
+.btn__show__add__chave__pix{
+    background: #530082;
+    border: none;
+    outline: none;
+    color: #f6f6f6;
+    height: 50px;
+    width: 300px;
+    font-size: 14px;
+    border-radius: 20px;
+    margin-left: 15px;
+}
+.btn__add__chave__pix{
+    background: transparent;
+    border: 1px solid #530082;
+    outline: none;
+    color: #530082;
+    height: 50px;
+    width: 100%;
+    font-size: 14px;
+    border-radius: 10px;
+    margin-left: 15px;
+    margin-right: 10px;
+}
+.text__add__first__chave__pix{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: gray;
+    font-size: 14px;
+    margin-top: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+.message__erro{
+    display: flex;
+    background: rgba(255, 0, 0, 0.495);
+    margin-left: 15px;
+    margin-right: 15px;
+    border-radius: 10px;
+    padding: 5px;
+    color: red;
+}
+.icon__VscError{
+    margin-top: 3px;
+    margin-right: 5px;
+    color: red;
+    font-size: 20px;
+}
