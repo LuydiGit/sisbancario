@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import mysql from 'mysql2';
+import axios from 'axios';
 
 import dotenv from 'dotenv';
 
@@ -65,7 +66,7 @@ app.get('/', (req, res) => {
   });
 });
 
-//Route to create a new client
+//Route to create a new client OK
 app.post('/api/v1/cliente', (req, res) => {
   const { name, cpf, data_nascimento, email, celular, senha } = req.body;
 
@@ -88,7 +89,7 @@ app.post('/api/v1/cliente', (req, res) => {
 
 });
 
-//Route to get pix key
+//Route to get pix key OK
 app.get('/api/v1/pixKey/:clientId', async (req, res) =>{
   const clientId = req.params.clientId;
 
@@ -116,7 +117,48 @@ app.get('/api/v1/pixKey/:clientId', async (req, res) =>{
   }
 })
 
-// Route to create a new Pix key
+//Route to get saldo OK
+app.get('/api/v1/saldo/:clientId', async (req, res) =>{
+  const clientId = req.params.clientId;
+
+  try {
+    // Obten a chave pix do cliente
+    const sql = `
+      SELECT saldo FROM contas WHERE cliente_id = ?;
+    `;
+    const resultPixKey = await new Promise((resolve, reject) => {
+      db.query(sql, [clientId], (err, results) => {
+        if (err) {
+          return reject(err); // Rejeita a promessa em caso de erro na consulta
+        }
+        if (results.length < 1) {
+          return reject(new Error("Nenhum resultado encontrado para o cliente especificado")); // Rejeita com mensagem específica
+        }
+        resolve(results); // Resolve a promessa com os resultados
+      });
+    });
+
+    return res.status(200).json({ result: resultPixKey });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro interno no servidor" });
+  }
+})
+
+//Route to search pix key to send money
+app.get('/api/v1/searchPixKey/:pixKey', async (req, res) =>{
+  const pixKey = req.params.pixKey;
+
+  try {
+    axios.get()
+    
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro interno no servidor" });
+  }
+})
+
+// Route to create a new Pix key OK
 app.post('/api/v1/pixKey', async (req, res) => {
   const { bancoId, clientId, saldo, chavePix, tipo_chave_pix } = req.body;
 
@@ -126,77 +168,49 @@ app.post('/api/v1/pixKey', async (req, res) => {
   }
 
   try {
-    // Verifica se a chave Pix já está cadastrada na tabela 'contas'
-    const checkPixSqlContas = `
-      SELECT * FROM contas WHERE chave_pix = ? LIMIT 1
-    `;
-    const existingPixContas = await new Promise((resolve, reject) => {
-      db.query(checkPixSqlContas, [chavePix], (err, results) => {
-        if (err) return reject(err);
-        resolve(results.length > 0);
-      });
-    });
+    // Verifica se a chave Pix já existe no banco do cliente
+    const checkPixSqlContas = `SELECT * FROM contas WHERE chave_pix = ?`;
+    const [existingPixContas] = await db.promise().query(checkPixSqlContas, [chavePix]);
 
-    if (existingPixContas) {
+    if (existingPixContas.length > 0) {
       return res.status(409).json({ message: "Já existe uma chave Pix cadastrada com o mesmo valor." });
     }
 
-    // Verifica se a chave Pix já está cadastrada no banco central
-    const checkPixSqlBC = `
-      SELECT * FROM chaves_pix WHERE chave = ? LIMIT 1
-    `;
-    const existingPixBC = await new Promise((resolve, reject) => {
-      db_bc.query(checkPixSqlBC, [chavePix], (err, results) => {
-        if (err) return reject(err);
-        resolve(results.length > 0);
-      });
-    });
+    // Verifica se a chave Pix é autorizada pelo Banco Central
+    const bankAuthResponse = await axios.get(`http://localhost:5003/api/v1/pixKey/${chavePix}`);
 
-    if (existingPixBC) {
-      return res.status(409).json({ message: "A chave Pix já está cadastrada no banco central" });
+    if (bankAuthResponse.status !== 200) {
+      return res.status(409).json({ message: "Chave Pix não autorizada pelo Banco Central." });
     }
 
     // Insere os dados na tabela 'contas'
-    const sqlContas = `
+    const sqlInsertContas = `
       INSERT INTO contas (cliente_id, saldo, chave_pix, tipo_chave_pix) 
       VALUES (?, ?, ?, ?)
     `;
-    const contasValues = [clientId, saldo, chavePix, tipo_chave_pix];
+    await db.promise().query(sqlInsertContas, [clientId, saldo, chavePix, tipo_chave_pix]);
 
-    const resultContas = await new Promise((resolve, reject) => {
-      db.query(sqlContas, contasValues, (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      });
+    // Envia os dados para o Banco Central para registro da chave Pix
+    const bankRegisterResponse = await axios.post('http://localhost:5003/api/v1/pixKey', {
+      bancoId,
+      clientId,
+      chavePix,
+      tipo_chave_pix,
     });
 
-    console.log("Dados inseridos na tabela 'contas':", resultContas);
+    if (bankRegisterResponse.status === 201) {
+      return res.status(201).json({ message: "Chave Pix cadastrada com sucesso" });
+    }
 
-    // Insere os dados na tabela 'chaves_pix' no banco central
-    const sqlPixBC = `
-      INSERT INTO chaves_pix (banco_id, cliente_id, chave, tipo) 
-      VALUES (?, ?, ?, ?)
-    `;
-    const pixValues = [bancoId, clientId, chavePix, tipo_chave_pix];
-
-    const resultPixBC = await new Promise((resolve, reject) => {
-      db_bc.query(sqlPixBC, pixValues, (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      });
-    });
-
-    console.log("Dados inseridos no banco central:", resultPixBC);
-
-    // Resposta final
-    res.status(201).json({ message: "Chave Pix cadastrada com sucesso" });
+    // Caso algo inesperado aconteça
+    res.status(500).json({ message: "Erro ao registrar chave Pix no Banco Central." });
   } catch (error) {
     console.error("Erro ao processar a requisição:", error);
-    res.status(500).json({ message: "Erro interno no servidor" });
+    res.status(500).json({ message: "Erro interno no servidor." });
   }
 });
 
-// Route to delete Pix key
+// Route to delete Pix key OK
 app.delete('/api/v1/pixKey', async (req, res) => {
   const { chavePix } = req.query;
 
@@ -206,61 +220,18 @@ app.delete('/api/v1/pixKey', async (req, res) => {
   }
 
   try {
-    // Verifica se a chave Pix existe na tabela 'contas'
-    const checkPixSqlContas = `
-      SELECT * FROM contas WHERE chave_pix = ?;
-    `;
-    const existingPixContas = await new Promise((resolve, reject) => {
-      db.query(checkPixSqlContas, [chavePix], (err, results) => {
-        if (err) return reject(err);
-        resolve(results.length > 0);
-      });
-    });
-
-    if (!existingPixContas) {
-      return res.status(404).json({ message: "Chave Pix não encontrada na tabela 'contas'." });
-    }
-
-    // Verifica se a chave Pix existe na tabela 'chaves_pix' no banco central
-    const checkPixSqlBC = `
-      SELECT * FROM chaves_pix WHERE chave = ?;
-    `;
-    const existingPixBC = await new Promise((resolve, reject) => {
-      db_bc.query(checkPixSqlBC, [chavePix], (err, results) => {
-        if (err) return reject(err);
-        resolve(results.length > 0);
-      });
-    });
-
-    if (!existingPixBC) {
-      return res.status(404).json({ message: "Chave Pix não encontrada no banco central." });
-    }
-
     // Deleta a chave Pix da tabela 'contas'
     const deletePixSqlContas = `
       DELETE FROM contas WHERE chave_pix = ?
     `;
-    await new Promise((resolve, reject) => {
-      db.query(deletePixSqlContas, [chavePix], (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      });
-    });
+    await db.promise().query(deletePixSqlContas, [chavePix]);
 
-    console.log("Chave Pix deletada da tabela 'contas'.");
+    // Requisição para apagar a chave pix do Banco Central
+    const Response = await axios.delete(`http://localhost:5003/api/v1/pixKey?chavePix=${chavePix}`);
 
-    // Deleta a chave Pix da tabela 'chaves_pix' no banco central
-    const deletePixSqlBC = `
-      DELETE FROM chaves_pix WHERE chave = ?
-    `;
-    await new Promise((resolve, reject) => {
-      db_bc.query(deletePixSqlBC, [chavePix], (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      });
-    });
-
-    console.log("Chave Pix deletada do banco central.");
+    if (Response.status !== 201) {
+      return res.status(409).json({ message: "Não foi possível apagar a chave pix do Banco Central." });
+    }
 
     // Resposta final
     res.status(200).json({ message: "Chave Pix deletada com sucesso." });
@@ -270,7 +241,8 @@ app.delete('/api/v1/pixKey', async (req, res) => {
   }
 });
 
+
 // Iniciar o servidor
 app.listen(PORT, () => {
-  console.log(`API Banco 1 rodando na porta ${PORT}`);
+  console.log(`API Banco 1 rodando em http://localhost:${PORT}`);
 });

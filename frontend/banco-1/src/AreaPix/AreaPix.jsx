@@ -16,6 +16,8 @@ import './AreaPix.css'
 
 function AreaPix () {
 
+    const navigate = useNavigate();
+    
     const [showInputsChavePix, setShowInputsChavePix] = useState(false);
     const [typePixKey, setTypePixKey] = useState(false);
     const [pixKey, setPixKey] = useState(false);
@@ -28,6 +30,10 @@ function AreaPix () {
     const [isLoading, setIsLoading] = useState(false)
 
     const clientId = 11;
+
+    const navigateToTransferenciaPix = () =>{
+        navigate('/TransferenciaPix')
+    }
 
     const showInputs = () =>{
         setShowInputsChavePix(true)
@@ -123,7 +129,7 @@ function AreaPix () {
                     </div>
                 </div>
                 
-                <div className='sectio__pix__area__pix'>
+                <div className='sectio__pix__area__pix' onClick={navigateToTransferenciaPix}>
                     <div className='box__area__pix'>
                         <PiPixLogo className="icon__PiPixLogo"/>
                     </div>

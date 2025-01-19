@@ -5,6 +5,7 @@ import Login from './Login/Login';
 import CreateClient from './CreateClient/CreateClient';
 import Home from './Home/Home';
 import AreaPix from './AreaPix/AreaPix';
+import TransferenciaPix from './TransferenciaPix/TransferenciaPix';
 
 function App() {
 
@@ -16,6 +17,7 @@ function App() {
           <Route path="/CreateClient" element={<CreateClient />} />
           <Route path="/Home" element={<Home />} />
           <Route path="/AreaPix" element={<AreaPix />} />
+          <Route path="/TransferenciaPix" element={<TransferenciaPix />} />
 
       </Routes>
     </Router>
