@@ -25,6 +25,7 @@ function AreaPix () {
     const [erroRequest, setErroRequest] = useState(false)
     const [sucessRequest, setSucessRequest] = useState(false)
     const [showBtnDeletePixKey, setShowBtnDeletePixKey] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
 
     const clientId = 11;
 
@@ -52,6 +53,7 @@ function AreaPix () {
     }, [])
 
     const createNewPixKey = () =>{
+        setIsLoading(true)
         const values = {
             bancoId: 1,
             clientId: clientId,
@@ -68,10 +70,12 @@ function AreaPix () {
             return setTimeout(() => {
                 getPixKey()
                 setMessage('');
+                setIsLoading(false)
                 setShowInputsChavePix(false)
               }, 3000);
         })
         .catch(err =>{
+            setIsLoading(false)
             console.log(err)
             setErroRequest(true)
             setMessage(err.response.data.message)
@@ -82,7 +86,7 @@ function AreaPix () {
     }
 
     const deletePixKey = () =>{
-        
+        setIsLoading(true)
         axios.delete(`http://localhost:5001/api/v1/pixKey?chavePix=${pixKey}`)
         .then(res => {
             console.log(res)
@@ -92,10 +96,12 @@ function AreaPix () {
                 setShowBtnDeletePixKey(false)
                 setTypePixKey(false)
                 setPixKey(false)
+                setIsLoading(false)
                 setSucessRequest(false)
               }, 3000);
         })
         .catch(err =>{
+            setIsLoading(false)
             console.log(err)
             setMessage(err.response.data.message)
             return setTimeout(() => {
@@ -171,26 +177,43 @@ function AreaPix () {
                                     <p >{message}</p>
                                 </div>
                             )}
+
                             {sucessRequest && (
                                 <div className="message__sucess">
                                     <FaRegCheckCircle className="icon__FaRegCheckCircle"/>
                                     <p >{message}</p>
                                 </div>
                             )}
-                            <div className="box__btn__add__chave__pix" onClick={createNewPixKey}>
-                                <button className="btn__add__chave__pix">
-                                    Cradastar chave pix
-                                </button>
+                            
+                            <div className="container__loading__and__btn">
+                                {isLoading ? (
+                                    <svg viewBox="25 25 50 50" className="svg">
+                                        <circle r="20" cy="50" cx="50"></circle>
+                                    </svg>
+                                ):(
+                                    <div className="box__btn__add__chave__pix" onClick={createNewPixKey}>
+                                        <button className={` ${newTypePixKey && newPixKey ? 'btn__show__add__chave__pix':'btn__add__chave__pix'}`}>
+                                            Cradastar chave pix
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
                     
                     {showBtnDeletePixKey && (
                         <div className="container__btn__delete__chave__pix">
-                            <button className="btn__ cancel" onClick={() =>{setShowBtnDeletePixKey(false)}}>Cancelar</button>
-                            <button className="btn__ confirm" onClick={deletePixKey}>Confirmar</button>
+                            {isLoading ? (
+                                <svg viewBox="25 25 50 50" className="svg">
+                                    <circle r="20" cy="50" cx="50"></circle>
+                                </svg>
+                            ):(
+                                <div className="container__btn__delete__chave__pix">
+                                    <button className="btn__ cancel" onClick={() =>{setShowBtnDeletePixKey(false)}}>Cancelar</button>
+                                    <button className="btn__ confirm" onClick={deletePixKey}>Confirmar</button>
+                                </div>
+                            )}
                         </div>
-                        
                     )}
                     {(!showInputsChavePix && !showBtnDeletePixKey) && (!typePixKey && !pixKey) &&(
                         <div className="box__btn__add__chave__pix" onClick={showInputs}>
