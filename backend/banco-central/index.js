@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import mysql from 'mysql2';
+import axios from 'axios';
 
 import dotenv from 'dotenv';
 
@@ -35,7 +36,7 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
-
+//Route to verify if pix key exists
 app.get('/api/v1/pixKey/:pixKey', async (req, res) => {
   const { pixKey } = req.params;
 
@@ -51,6 +52,46 @@ app.get('/api/v1/pixKey/:pixKey', async (req, res) => {
     return res.status(200).json({ message: "Cadastro autorizado." });
   } catch (error) {
     console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro interno no servidor." });
+  }
+});
+
+//Route to get recipient client data
+app.get('/api/v1/cliente/:pixKey', async (req, res) => {
+  const { pixKey } = req.params;
+
+  try {
+    // Obtem os IDs do banco e cliente associado à chave Pix
+    const selectIDs = `SELECT banco_id, cliente_id FROM chaves_pix WHERE chave = ? LIMIT 1`;
+    const [existingIDs] = await db_bc.promise().query(selectIDs, [pixKey]);
+
+    if (existingIDs.length === 0) {
+      return res.status(404).json({ message: "Chave Pix não encontrada no Banco Central." });
+    }
+
+    const { banco_id: bancoId, cliente_id: clienteId } = existingIDs[0];
+
+    // Obtem a URL da API do banco destinatário
+    const selectUrlApiBank = `SELECT name, url_api FROM bancos WHERE id = ? LIMIT 1`;
+    const [urlAPI] = await db_bc.promise().query(selectUrlApiBank, [bancoId]);
+
+    if (urlAPI.length === 0) {
+      return res.status(404).json({ message: "Banco destinatário não encontrado." });
+    }
+
+    const url = urlAPI[0].url_api;
+
+    // Requisição à API do banco destinatário para obter dados do cliente
+    const response = await axios.get(`${url}/api/v1/client/${clienteId}`);
+    const dataClientResponse = response.data.result;
+
+    if (!dataClientResponse || Object.keys(dataClientResponse).length === 0) {
+      return res.status(404).json({ message: "Dados do cliente não encontrados no banco destinatário." });
+    }
+
+    return res.status(200).json({ result: dataClientResponse, banco_Name:  urlAPI[0].name});
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error.message || error);
     res.status(500).json({ message: "Erro interno no servidor." });
   }
 });

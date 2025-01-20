@@ -27,24 +27,6 @@ db.connect((err) => {
   console.log('Conectado ao banco de dados MySQL');
 });
 
-//============== Conexão com o DB do Banco Central ==============
-// Criando conexão
-const db_bc = mysql.createConnection({
-  host: process.env.DB_HOST_BC,  
-  user: process.env.DB_USER_BC, 
-  password: process.env.DB_PASSWORD_BC,
-  database: process.env.DB_NAME_BC
-});
-
-// Verificar a conexão com o banco de dados do
-db_bc.connect((err) => {
-  if (err) {
-    console.error('Erro ao conectar com o banco de dados do BC:', err);
-    return;
-  }
-  console.log('Conectado ao banco de dados do BC');
-});
-
 const app = express();
 const PORT = process.env.PORT || 5002;
 
@@ -53,16 +35,24 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
-// Rotas
-app.get('/', (req, res) => {
-  db.query('SELECT * FROM clientes', (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
+//Route to get client data
+app.get('/api/v1/client/:clientId', async (req, res) => {
+  const { clientId } = req.params;
+
+  try {
+    // Consulta para obter os dados do cliente no banco
+    const sql = `SELECT nome, cpf FROM clientes WHERE id = ? LIMIT 1`;
+    const [dataClient] = await db.promise().query(sql, [clientId]);
+
+    if (dataClient.length === 0) {
+      return res.status(404).json({ message: "Cliente não encontrado." });
     }
-    console.log(results)
-    res.status(200).json(results);
-  });
+
+    return res.status(200).json({ result: dataClient[0] });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error.message || error);
+    res.status(500).json({ message: "Erro interno no servidor." });
+  }
 });
 
 //Route to create a new client

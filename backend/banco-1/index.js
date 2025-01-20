@@ -146,17 +146,24 @@ app.get('/api/v1/saldo/:clientId', async (req, res) =>{
 })
 
 //Route to search pix key to send money
-app.get('/api/v1/searchPixKey/:pixKey', async (req, res) =>{
-  const pixKey = req.params.pixKey;
+app.get('/api/v1/searchClientByPixKey/:pixKey', async (req, res) => {
+  const { pixKey } = req.params;
 
   try {
-    axios.get()
-    
+    // Requisição ao Banco Central para obter dados do cliente destinatário
+    const response = await axios.get(`http://localhost:5003/api/v1/cliente/${pixKey}`);
+    const dataClientResponse = response.data;
+
+    if (!dataClientResponse || Object.keys(dataClientResponse).length === 0) {
+      return res.status(404).json({ message: "Cliente não encontrado." });
+    }
+
+    return res.status(200).json({ result: dataClientResponse });
   } catch (error) {
-    console.error("Erro ao processar a requisição:", error);
-    res.status(500).json({ message: "Erro interno no servidor" });
+    console.error("Erro ao processar a requisição:", error.message || error);
+    res.status(500).json({ message: "Erro interno no servidor." });
   }
-})
+});
 
 // Route to create a new Pix key OK
 app.post('/api/v1/pixKey', async (req, res) => {
@@ -209,6 +216,28 @@ app.post('/api/v1/pixKey', async (req, res) => {
     res.status(500).json({ message: "Erro interno no servidor." });
   }
 });
+
+app.put('/api/v1/transferenciaPix', async (req, res) =>{
+  const { valorEnviado, chavePix } = req.body;
+
+  // Validação dos campos obrigatórios
+  if (!valorEnviado || !chavePix) {
+    return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+  }
+
+  try{
+    // Obten o saldo da conta do cliente
+    const selectSaldo = `SELECT saldo FROM contas WHERE chave_pix = ?`;
+    const [saldoTotal] = await db.promise().query(selectSaldo, [chavePix]);
+
+    if (saldoTotal.length > 0) {
+      return res.status(409).json({ message: "Já existe uma chave Pix cadastrada com o mesmo valor." });
+    }
+  }catch (error){
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro interno no servidor." });
+  }
+})
 
 // Route to delete Pix key OK
 app.delete('/api/v1/pixKey', async (req, res) => {
