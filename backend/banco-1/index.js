@@ -28,24 +28,6 @@ db.connect((err) => {
   console.log('Conectado ao banco de dados MySQL');
 });
 
-//============== Conexão com o DB do Banco Central ==============
-// Criando conexão
-const db_bc = mysql.createConnection({
-  host: process.env.DB_HOST_BC,  
-  user: process.env.DB_USER_BC, 
-  password: process.env.DB_PASSWORD_BC,
-  database: process.env.DB_NAME_BC
-});
-
-// Verificar a conexão com o banco de dados do
-db_bc.connect((err) => {
-  if (err) {
-    console.error('Erro ao conectar com o banco de dados do BC:', err);
-    return;
-  }
-  console.log('Conectado ao banco de dados do BC');
-});
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -155,13 +137,19 @@ app.get('/api/v1/searchClientByPixKey/:pixKey', async (req, res) => {
     const dataClientResponse = response.data;
 
     if (!dataClientResponse || Object.keys(dataClientResponse).length === 0) {
-      return res.status(404).json({ message: "Cliente não encontrado." });
+      return res.status(404).json({ message: "Chave Pix não encontrada no sistema." });
     }
 
     return res.status(200).json({ result: dataClientResponse });
   } catch (error) {
     console.error("Erro ao processar a requisição:", error.message || error);
-    res.status(500).json({ message: "Erro interno no servidor." });
+
+    // Tratar erros específicos
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json({ message: "Chave pix não encontrada. Verifique a chave informada e tente novamente." });
+    }
+
+    res.status(500).json({ message: "Erro interno no servidor. Tente novamente mais tarde." });
   }
 });
 
@@ -218,21 +206,50 @@ app.post('/api/v1/pixKey', async (req, res) => {
 });
 
 app.put('/api/v1/transferenciaPix', async (req, res) =>{
-  const { valorEnviado, chavePix } = req.body;
+  const { clientId, valorTransacao, chavePix } = req.body;
 
   // Validação dos campos obrigatórios
-  if (!valorEnviado || !chavePix) {
+  if (!clientId || !valorTransacao || !chavePix) {
     return res.status(400).json({ message: "Todos os campos são obrigatórios" });
   }
 
   try{
     // Obten o saldo da conta do cliente
-    const selectSaldo = `SELECT saldo FROM contas WHERE chave_pix = ?`;
-    const [saldoTotal] = await db.promise().query(selectSaldo, [chavePix]);
+    const selectSaldo = `SELECT saldo FROM contas WHERE cliente_id = ?`;
+    const [saldoTotal] = await db.promise().query(selectSaldo, [clientId]);
 
-    if (saldoTotal.length > 0) {
-      return res.status(409).json({ message: "Já existe uma chave Pix cadastrada com o mesmo valor." });
+    if (saldoTotal.length === 0 ) {
+      return res.status(409).json({ message: "Não há saldo em conta." });
     }
+
+    const saldoAtual = Number (saldoTotal[0].saldo)
+    const valorTransacaoFormatado = Number (valorTransacao.replace(/R\$\s?(\d+),(\d{2})/, '$1.$2'))
+
+    if(valorTransacaoFormatado > saldoAtual){
+      return res.status(409).json({ message: "Saldo em conta é menor que o valor solicitado." });
+    }
+
+    //Objeto com os valores da transação
+    const values ={
+      valor: valorTransacaoFormatado,
+      chavePix
+    }
+    // Verifica se a chave Pix é autorizada pelo Banco Central
+    const responseCentralBank = await axios.put(`http://localhost:5003/api/v1/transferenciaPix`, values);
+
+    if(responseCentralBank.data.Sucess === true){
+      const saldoAtualizado = saldoAtual - valorTransacaoFormatado;
+      
+      // Atualiza o saldo da conta do cliente final
+      const updateSaldo = `UPDATE contas SET saldo = ? WHERE cliente_id = ?`;
+      const [resultSql] = await db.promise().query(updateSaldo, [saldoAtualizado, clientId]);
+
+      if(resultSql.affectedRows === 1){
+        // Resposta final
+        return res.status(201).json({ Sucess: true });
+      }
+    }
+
   }catch (error){
     console.error("Erro ao processar a requisição:", error);
     res.status(500).json({ message: "Erro interno no servidor." });

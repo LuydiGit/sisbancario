@@ -45,13 +45,13 @@ app.get('/api/v1/client/:clientId', async (req, res) => {
     const [dataClient] = await db.promise().query(sql, [clientId]);
 
     if (dataClient.length === 0) {
-      return res.status(404).json({ message: "Cliente não encontrado." });
+      return res.status(404).json({ success: false, message: "Cliente não encontrado no sistema." });
     }
 
     return res.status(200).json({ result: dataClient[0] });
   } catch (error) {
     console.error("Erro ao processar a requisição:", error.message || error);
-    res.status(500).json({ message: "Erro interno no servidor." });
+    res.status(500).json({ message: "Erro interno no servidor. Tente novamente mais tarde." });
   }
 });
 
@@ -123,7 +123,36 @@ app.post('/api/v1/pixKey', async (req, res) => {
   }
 });
 
+//Route to receive pix transfer
+app.put('/api/v1/receiveTransfer', async (req, res) =>{
+  const { valor, clienteId } = req.body;
 
+  // Validação dos campos obrigatórios
+  if (!valor || !clienteId) {
+    return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+  }
+
+  try {
+    // Obten o saldo da conta do cliente
+    const selectSaldo = `SELECT saldo FROM contas WHERE cliente_id = ?`;
+    const [saldoTotal] = await db.promise().query(selectSaldo, [clienteId]);
+
+    const saldoAtual = Number (saldoTotal[0].saldo)
+    const saldoAtualizado = saldoAtual + valor
+    
+    // Atualiza o saldo da conta do cliente final
+    const updateSaldo = `UPDATE contas SET saldo = ? WHERE cliente_id = ?`;
+    const [resultSql] = await db.promise().query(updateSaldo, [saldoAtualizado, clienteId]);
+
+    if(resultSql.affectedRows === 1){
+      // Resposta final
+      return res.status(201).json({ Sucess: true });
+    }
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ error: "Erro interno no servidor" });
+  }
+})
 // Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`API Banco 2 rodando na porta ${PORT}`);

@@ -24,8 +24,8 @@ function TransferenciaPix () {
     const [bankName, setBankName] = useState('')
     const [clientName, setClientName] = useState('')
     const [clientCPF, setClientCPF] = useState('')
-    const [isValorGreaterSaldo, setIsValorGreaterSaldo] = useState(false)
-console.log(isValorGreaterSaldo)
+    const [erroRequest, setErroRequest] = useState(false)
+
     const clientId = 11;
 
     //Função para buscar o cliente destinatário
@@ -41,7 +41,9 @@ console.log(isValorGreaterSaldo)
         .catch(err =>{
             console.log(err)
             setMessage(err.response.data.message)
+            setErroRequest(true)
             return setTimeout(() => {
+                setErroRequest(false)
                 setMessage('');
               }, 3000);
         })
@@ -89,10 +91,31 @@ console.log(isValorGreaterSaldo)
               }, 3000);
         })
     }
-    
     useEffect(() =>{
         consultarSaldo()
     }, [])
+
+    const transferirPix = () =>{
+        const values = {
+            clientId,
+            valorTransacao: valor,
+            chavePix: pixKey
+        }
+        axios.put(`http://localhost:5001/api/v1/transferenciaPix`, values)
+        .then(res => {
+            console.log(res)
+            
+        })
+        .catch(err =>{
+            console.log(err)
+            setMessage(err.response.data.message)
+            setErroRequest(true)
+            return setTimeout(() => {
+                setErroRequest(false)
+                setMessage('');
+              }, 3000);
+        })
+    }
     
     return (
         <div className='container__main'>
@@ -114,7 +137,7 @@ console.log(isValorGreaterSaldo)
                                 <p>Instituição <b>{bankName}</b></p>
 
                                 <div className="box__btn__add__chave__pix">
-                                    <button className="btn__show__add__chave__pix">
+                                    <button className="btn__show__add__chave__pix" onClick={transferirPix}>
                                         Confirmar
                                     </button>
                                 </div>
@@ -153,11 +176,18 @@ console.log(isValorGreaterSaldo)
                                         <div className="inputForm" style={{width:'90%'}}>
                                             <input type="text" className="input" name="chavePix" onChange={(e) => setPixKey(e.target.value)} placeholder="CPF, Email ou Celular" />
                                         </div>
+                                        {erroRequest ? (
+                                            <div className="message__erro" style={{width:'90%', marginTop: '10px'}}>
+                                                <VscError className="icon__VscError"/>
+                                                <p >{message}</p>
+                                            </div>
+                                        ):(
                                         <div className="box__btn__add__chave__pix">
                                             <button className="btn__show__add__chave__pix" onClick={searchClient}>
                                                 Continuar
                                             </button>
                                         </div>
+                                        )}
                                     </>
                                 )}
                             </div>
