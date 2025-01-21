@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom"
 import axios from 'axios';
 
 import { PiPixLogo } from "react-icons/pi";
-import { RiImageAddLine } from "react-icons/ri";
-import { LuUserRound } from "react-icons/lu";
+import { PiMoneyWavy } from "react-icons/pi";
 import { IoClose } from "react-icons/io5";
 import { FaRegCircleQuestion } from "react-icons/fa6";
 import { VscError } from "react-icons/vsc";
@@ -28,6 +27,7 @@ function AreaPix () {
     const [sucessRequest, setSucessRequest] = useState(false)
     const [showBtnDeletePixKey, setShowBtnDeletePixKey] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [chaveCopiada, setChaveCopiada] = useState(false);
 
     const clientId = 11;
 
@@ -35,8 +35,20 @@ function AreaPix () {
         navigate('/TransferenciaPix')
     }
 
+    const navigateToHome = () =>{
+        navigate('/Home')
+    }
+
     const showInputs = () =>{
         setShowInputsChavePix(true)
+    }
+
+    // Função para copiar a chave pix
+    const handleCopyLink = () =>{
+        navigator.clipboard.writeText(pixKey);
+        setChaveCopiada(true);
+        setMessage('Chave pix copiada com sucesso.')
+        setTimeout(() => setChaveCopiada(false), 2000);
     }
 
     const getPixKey = () =>{
@@ -120,22 +132,37 @@ function AreaPix () {
             <div className='section__main'>
                 <div className='header__main__area__pix'>
                     <div className="box__close__and__question">
-                        <IoClose className="icon__close__and__question"/>
+                        <IoClose className="icon__close__and__question" onClick={navigateToHome}/>
                         <FaRegCircleQuestion className="icon__close__and__question"/>
                     </div>
                     <div style={{color:'black', paddingLeft: '15px'}}>
                         <h2>Área pix</h2>
-                        <p>Lorem capitulum</p>
+                        <p>Envie e receba pagamentos a qualquer hora e dia da semana, sem pagar nada por</p>
                     </div>
                 </div>
                 
-                <div className='sectio__pix__area__pix' onClick={navigateToTransferenciaPix}>
-                    <div className='box__area__pix'>
-                        <PiPixLogo className="icon__PiPixLogo"/>
+                <div className='sectio__pix__area__pix' >
+                    <div className="conteiner__option" onClick={navigateToTransferenciaPix}>
+                        <div className='box__area__pix'>
+                            <PiPixLogo className="icon__PiPixLogo"/>
+                        </div>
+                        <p style={{color: 'black'}}>Transferir</p>
                     </div>
-                    <p style={{color: 'black'}}>Transferir</p>
+                    <div className="conteiner__option" onClick={handleCopyLink}>
+                        <div className='box__area__pix' >
+                            <PiMoneyWavy className="icon__PiPixLogo"/>
+                        </div>
+                        <p style={{color: 'black'}}>Receber</p>
+                    </div>
+                    
                 </div>
 
+                {chaveCopiada && (
+                    <div className="message__sucess" style={{marginTop: '10px'}}>
+                        <FaRegCheckCircle className="icon__FaRegCheckCircle"/>
+                        <p >{message}</p>
+                    </div>
+                )}
                 <div className="section__add__chave__pix">
                     <h3 style={{color:'black', paddingLeft: '15px'}}>Chave pix</h3>
                     {typePixKey && pixKey ?(

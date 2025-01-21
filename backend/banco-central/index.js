@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import mysql from 'mysql2';
 import axios from 'axios';
-
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 
 // Carregar variáveis de ambiente
@@ -56,8 +56,9 @@ app.get('/api/v1/pixKey/:pixKey', async (req, res) => {
   }
 });
 
-// Função para obter os dados do destinatário
+
 async function getDataRecipient(pixKey) {
+  
   try {
     // Obter IDs do banco e cliente associado à chave Pix
     const selectIDs = `SELECT banco_id, cliente_id FROM chaves_pix WHERE chave = ? LIMIT 1`;
@@ -87,6 +88,25 @@ async function getDataRecipient(pixKey) {
     throw new Error(error.message || "Erro ao buscar dados do destinatário.");
   }
 }
+
+// Função para gerar um ID único para a transação
+function generateTransactionId() {
+  const timestamp = Date.now().toString(36); // Marca de tempo em base 36
+  const randomString = crypto.randomBytes(4).toString('hex'); // String aleatória de 8 caracteres
+  return `${timestamp}-${randomString}`.toUpperCase();
+}
+
+// Função para obter a data e hora atual no formato 'DD-MM-AAAA-HH:MM'
+function getCurrentTimestamp() {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${day}-${month}-${year}-${hours}:${minutes}`;
+}
+
 
 //Route to get recipient client data
 app.get('/api/v1/cliente/:pixKey', async (req, res) => {
@@ -151,21 +171,34 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
   }
 
   try{
+    // Gera o ID único da transação
+    const transactionId = generateTransactionId();
+
+    // Obtém a data e hora atual
+    const timestamp = getCurrentTimestamp();
+
     // Chama a função para buscar os dados
     const { bancoApiUrl, clienteId } = await getDataRecipient(chavePix);
 
     //Objeto com os valores da transferência
     const values = {
       valor,
-      clienteId
+      cliente_recebedor_id: clienteId,
+      chavePix,
+      transactionId,
+      timestamp
     }
     // Requisição à API do banco destinatário para creditar o valor da transação
     const response = await axios.put(`${bancoApiUrl}/api/v1/receiveTransfer`, values);
     const transferConfirmation = response.data;
 
     if(transferConfirmation.Sucess === true){
+      const valuesTransation = {
+        transactionId,
+        timestamp
+      }
       // Resposta final
-      return res.status(201).json({ Sucess: true });
+      return res.status(201).json({ Sucess: true, valuesTransation:  valuesTransation });
     }
     
 

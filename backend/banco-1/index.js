@@ -215,7 +215,7 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
 
   try{
     // Obten o saldo da conta do cliente
-    const selectSaldo = `SELECT saldo FROM contas WHERE cliente_id = ?`;
+    const selectSaldo = `SELECT id, saldo FROM contas WHERE cliente_id = ?`;
     const [saldoTotal] = await db.promise().query(selectSaldo, [clientId]);
 
     if (saldoTotal.length === 0 ) {
@@ -232,8 +232,10 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
     //Objeto com os valores da transação
     const values ={
       valor: valorTransacaoFormatado,
-      chavePix
+      chavePix,
+      contaId: saldoTotal[0].id
     }
+
     // Verifica se a chave Pix é autorizada pelo Banco Central
     const responseCentralBank = await axios.put(`http://localhost:5003/api/v1/transferenciaPix`, values);
 
@@ -245,6 +247,19 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
       const [resultSql] = await db.promise().query(updateSaldo, [saldoAtualizado, clientId]);
 
       if(resultSql.affectedRows === 1){
+        // Salva a transação no banco de dados
+        const sqlInsertTransaction = `
+        INSERT INTO transacoes (conta_id, tipo, valor, chave_pix, banco_oposto, status, transacao_id, data_hora)
+        VALUES (?, 'ENVIADA', ?, ?, 'Banco Two', 'CONCLUIDA', ?, ?)`;
+
+        await db.promise().query(sqlInsertTransaction, [
+          saldoTotal[0].id,
+          valorTransacaoFormatado,
+          chavePix,
+          responseCentralBank.data.valuesTransation.transactionId,
+          responseCentralBank.data.valuesTransation.timestamp
+        ]);
+
         // Resposta final
         return res.status(201).json({ Sucess: true });
       }

@@ -125,28 +125,41 @@ app.post('/api/v1/pixKey', async (req, res) => {
 
 //Route to receive pix transfer
 app.put('/api/v1/receiveTransfer', async (req, res) =>{
-  const { valor, clienteId } = req.body;
+  const { valor, cliente_recebedor_id, chavePix, transactionId, timestamp } = req.body;
 
   // Validação dos campos obrigatórios
-  if (!valor || !clienteId) {
+  if (!valor || !cliente_recebedor_id || !chavePix || !transactionId || !timestamp) {
     return res.status(400).json({ message: "Todos os campos são obrigatórios" });
   }
 
   try {
     // Obten o saldo da conta do cliente
-    const selectSaldo = `SELECT saldo FROM contas WHERE cliente_id = ?`;
-    const [saldoTotal] = await db.promise().query(selectSaldo, [clienteId]);
+    const selectSaldo = `SELECT id, saldo FROM contas WHERE cliente_id = ?`;
+    const [saldoTotal] = await db.promise().query(selectSaldo, [cliente_recebedor_id]);
 
     const saldoAtual = Number (saldoTotal[0].saldo)
     const saldoAtualizado = saldoAtual + valor
     
     // Atualiza o saldo da conta do cliente final
     const updateSaldo = `UPDATE contas SET saldo = ? WHERE cliente_id = ?`;
-    const [resultSql] = await db.promise().query(updateSaldo, [saldoAtualizado, clienteId]);
+    const [resultSql] = await db.promise().query(updateSaldo, [saldoAtualizado, cliente_recebedor_id]);
 
     if(resultSql.affectedRows === 1){
+      // Salva a transação no banco de dados local (exemplo)
+      const sqlInsertTransaction = `
+      INSERT INTO transacoes (conta_id, tipo, valor, chave_pix, banco_oposto, status, transacao_id, data_hora)
+      VALUES (?, 'RECEBIDA', ?, ?, 'Banco One', 'CONCLUIDA', ?, ?)`;
+
+      await db.promise().query(sqlInsertTransaction, [
+        saldoTotal[0].id,
+        valor,
+        chavePix,
+        transactionId,
+        timestamp
+      ]);
+
       // Resposta final
-      return res.status(201).json({ Sucess: true });
+      return res.status(201).json({ Sucess: true, transactionId });
     }
   } catch (error) {
     console.error("Erro ao processar a requisição:", error);
