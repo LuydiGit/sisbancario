@@ -36,24 +36,12 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
-// Rotas
-app.get('/', (req, res) => {
-  db.query('SELECT * FROM clientes', (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    console.log(results)
-    res.status(200).json(results);
-  });
-});
-
 //Route to create a new client OK
 app.post('/api/v1/cliente', (req, res) => {
   const { name, cpf, data_nascimento, email, celular, senha } = req.body;
 
   if (!name || !cpf || !data_nascimento || !email || !celular || !senha) {
-    return res.status(400).send("Todos os campos são obrigatórios");
+    return res.status(400).send("Todos os campos são obrigatórios.");
   }
 
   const sql = `INSERT INTO clientes (nome, cpf, data_nascimento, email, celular, senha) VALUES (?, ?, ?, ?, ?, ?)`;
@@ -65,10 +53,38 @@ app.post('/api/v1/cliente', (req, res) => {
       return res.status(500).send("Erro no servidor");
     }
     if(result){
-      return res.status(200).send("Dados inseridos com sucesso");
+      return res.status(200).send("Cadastro realizado com sucesso.");
     }
   });
 
+});
+
+// Rota para login de cliente
+app.post('/api/v1/login', async (req, res) => {
+  const { email, senha } = req.body;
+
+  // Verificar se os campos obrigatórios foram fornecidos
+  if (!email || !senha) {
+    return res.status(400).send("E-mail e senha são obrigatórios.");
+  }
+
+  try {
+    // Consulta ao banco para verificar o cliente pelo e-mail
+    const sql = `SELECT id, nome, senha FROM clientes WHERE email = ?`;
+    const [rows] = await db.promise().query(sql, [email]);
+
+    if (rows.length === 0) {
+      return res.status(401).send("E-mail ou senha inválidos.");
+    }
+
+    const { id, nome } = rows[0];
+
+    // Resposta de sucesso com os dados do cliente e o token
+    return res.status(200).json({ user: { id, nome, email } });
+  } catch (error) {
+    console.error("Erro ao realizar login:", error.message || error);
+    return res.status(500).send("Erro interno no servidor.");
+  }
 });
 
 //Route to get pix key OK

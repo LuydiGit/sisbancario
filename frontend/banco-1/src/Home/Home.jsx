@@ -1,19 +1,25 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import axios from 'axios';
 
 import { PiPixLogo } from "react-icons/pi";
 import { FaRegUser } from "react-icons/fa6";
-import { LuUserRound } from "react-icons/lu";
 
 import './Home.css'
 
 function Home () {
 
     const navigate = useNavigate();
+
     const [saldo, setSaldo] = useState(false)
 
-    const clientId = 11;
+    const userData = localStorage.getItem('userData');
+    //trasnformando os dados para JSON
+    const userInformation = JSON.parse(userData);
+    console.log(userInformation)
+    //Fromatando cada letra inicial do nome do usuário para caixa-alta
+    const clientId = userInformation.id;
+    const clientName = userInformation.nome;
 
     const navigateToAreaPix = () =>{ 
         navigate('/AreaPix')
@@ -45,7 +51,7 @@ function Home () {
     useEffect(() =>{
         consultarSaldo()
     }, [])
-    console.log(saldo)
+    
     return (
         <div className='container__main'>
             <div className='section__main'>
@@ -53,7 +59,7 @@ function Home () {
                     <div className='box__img'>
                         <FaRegUser className="icon__LuUserRound"/>
                     </div>
-                    <h2 className='name__user'>Olá, João</h2>
+                    <h2 className='name__user'>Olá, {clientName}</h2>
                 </div>
                 <div className='section__conta'>
                     <p>Conta</p>

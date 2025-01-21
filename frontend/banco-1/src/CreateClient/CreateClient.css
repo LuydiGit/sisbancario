@@ -2,10 +2,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    background: #151717;
+    background: radial-gradient(circle, #530082, #000);
     height: 100dvh;
-    padding-top: 50px;
+    width: 100%;
 }
 /* From Uiverse.io by micaelgomestavares */ 
 .form {
@@ -48,7 +47,7 @@
     border: none;
     width: 85%;
     height: 35px;
-    background: transparent;
+    background: #ffffff;
     color: #151717;
   }
   
@@ -84,7 +83,7 @@
   
   .button-submit {
     margin: 20px 0 10px 0;
-    background-color: #151717;
+    background-color: #530082;
     border: none;
     color: white;
     font-size: 15px;
@@ -125,7 +124,13 @@
   
   .btn:hover {
     border: 1px solid #2d79f3;
-    ;
+  }
+
+  .box_loading{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
       
