@@ -122,7 +122,7 @@ app.get('/api/v1/saldo/:clientId', async (req, res) =>{
   try {
     // Obten a chave pix do cliente
     const sql = `
-      SELECT saldo FROM contas WHERE cliente_id = ?;
+      SELECT id, saldo, chave_pix FROM contas WHERE cliente_id = ?;
     `;
     const resultPixKey = await new Promise((resolve, reject) => {
       db.query(sql, [clientId], (err, results) => {
@@ -137,6 +137,32 @@ app.get('/api/v1/saldo/:clientId', async (req, res) =>{
     });
 
     return res.status(200).json({ result: resultPixKey });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro interno no servidor" });
+  }
+})
+
+//Route to get transações OK
+app.get('/api/v1/transacoes/:contaId', async (req, res) =>{
+  const contaId = req.params.contaId;
+
+  // Validação dos campos obrigatórios
+  if (!contaId ) {
+    return res.status(400).json({ message: "Todos os campos são obrigatórios." });
+  }
+
+  try {
+  
+  // Obten os dados de transação do cliente
+  const selectTransacoes = `SELECT tipo, valor, chave_pix, banco_oposto, status, transacao_id, data_hora FROM transacoes WHERE conta_id = ?`;
+  const [transacoes] = await db.promise().query(selectTransacoes, [contaId]);
+
+  if (transacoes.length === 0 ) {
+    return res.status(409).json({ message: "Essa conta não possuí nenhuma transação." });
+  }
+
+    return res.status(200).json({ result: transacoes });
   } catch (error) {
     console.error("Erro ao processar a requisição:", error);
     res.status(500).json({ message: "Erro interno no servidor" });
@@ -165,6 +191,26 @@ app.get('/api/v1/searchClientByPixKey/:pixKey', async (req, res) => {
       return res.status(404).json({ message: "Chave pix não encontrada. Verifique a chave informada e tente novamente." });
     }
 
+    res.status(500).json({ message: "Erro interno no servidor. Tente novamente mais tarde." });
+  }
+});
+
+//Route to get client data
+app.get('/api/v1/client/:clientId', async (req, res) => {
+  const { clientId } = req.params;
+
+  try {
+    // Consulta para obter os dados do cliente no banco
+    const sql = `SELECT nome, cpf FROM clientes WHERE id = ? LIMIT 1`;
+    const [dataClient] = await db.promise().query(sql, [clientId]);
+
+    if (dataClient.length === 0) {
+      return res.status(404).json({ success: false, message: "Cliente não encontrado no sistema." });
+    }
+
+    return res.status(200).json({ result: dataClient[0] });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error.message || error);
     res.status(500).json({ message: "Erro interno no servidor. Tente novamente mais tarde." });
   }
 });
@@ -266,7 +312,7 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
         // Salva a transação no banco de dados
         const sqlInsertTransaction = `
         INSERT INTO transacoes (conta_id, tipo, valor, chave_pix, banco_oposto, status, transacao_id, data_hora)
-        VALUES (?, 'ENVIADA', ?, ?, 'Banco Two', 'CONCLUIDA', ?, ?)`;
+        VALUES (?, 'enviada', ?, ?, 'Banco Two', 'concluída', ?, ?)`;
 
         await db.promise().query(sqlInsertTransaction, [
           saldoTotal[0].id,
@@ -284,6 +330,50 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
   }catch (error){
     console.error("Erro ao processar a requisição:", error);
     res.status(500).json({ message: "Erro interno no servidor." });
+  }
+})
+
+//Route to receive pix transfer
+app.put('/api/v1/receiveTransfer', async (req, res) =>{
+  const { valor, cliente_recebedor_id, chavePix, transactionId, timestamp } = req.body;
+
+  // Validação dos campos obrigatórios
+  if (!valor || !cliente_recebedor_id || !chavePix || !transactionId || !timestamp) {
+    return res.status(400).json({ message: "Todos os campos são obrigatórios" });
+  }
+
+  try {
+    // Obten o saldo da conta do cliente
+    const selectSaldo = `SELECT id, saldo FROM contas WHERE cliente_id = ?`;
+    const [saldoTotal] = await db.promise().query(selectSaldo, [cliente_recebedor_id]);
+
+    const saldoAtual = Number (saldoTotal[0].saldo)
+    const saldoAtualizado = saldoAtual + valor
+    
+    // Atualiza o saldo da conta do cliente final
+    const updateSaldo = `UPDATE contas SET saldo = ? WHERE cliente_id = ?`;
+    const [resultSql] = await db.promise().query(updateSaldo, [saldoAtualizado, cliente_recebedor_id]);
+
+    if(resultSql.affectedRows === 1){
+      // Salva a transação no banco de dados local (exemplo)
+      const sqlInsertTransaction = `
+      INSERT INTO transacoes (conta_id, tipo, valor, chave_pix, banco_oposto, status, transacao_id, data_hora)
+      VALUES (?, 'recebida', ?, ?, 'Banco One', 'concluída', ?, ?)`;
+
+      await db.promise().query(sqlInsertTransaction, [
+        saldoTotal[0].id,
+        valor,
+        chavePix,
+        transactionId,
+        timestamp
+      ]);
+
+      // Resposta final
+      return res.status(201).json({ Sucess: true, transactionId });
+    }
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ error: "Erro interno no servidor" });
   }
 })
 

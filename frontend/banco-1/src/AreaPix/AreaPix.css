@@ -1,7 +1,6 @@
 .header__main__area__pix{
     height: 140px;
     border: none;
-    border-bottom: 1px solid gray;
 }
 .box__close__and__question{
     display: flex;
@@ -20,7 +19,6 @@
     margin-top: 20px;
     width: 100%;
     border: none;
-    border-bottom: 1px solid gray;
 }
 
 .section__add__chave__pix{
@@ -40,7 +38,7 @@
     color: #f6f6f6;
     height: 50px;
     width: 100%;
-    font-size: 14px;
+    font-size: 16px;
     border-radius: 10px;
     margin-left: 15px;
     margin-right: 10px;
@@ -52,20 +50,18 @@
     color: #530082;
     height: 50px;
     width: 100%;
-    font-size: 14px;
+    font-size: 16px;
     border-radius: 10px;
     margin-left: 15px;
     margin-right: 10px;
 }
 .text__add__first__chave__pix{
-    display: flex;
-    justify-content: center;
-    align-items: center;
     color: gray;
     font-size: 14px;
     margin-top: 10px;
     padding-left: 15px;
     padding-right: 15px;
+    margin-bottom: 10px;
 }
 .message__erro{
     display: flex;

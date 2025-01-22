@@ -1,16 +1,30 @@
 .container__main{
     display: flex;
     justify-content: center;
-    height: 100dvh
+    height: 100dvh;
+    background: red;
 }
 .section__main{
     background: white;
-    width: 380px;
+    width: 90%;
     height: 100dvh;
+    padding-left: 20px;
+    
+}
+.menu__nav{
+    background: #530082;
+    min-width: 20%;
 }
 .header__main{
-    background: #530082;
+    display: flex;
+    justify-content: left;
+    align-items: center;
     padding-left: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    color: black;
+    border: none;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.288);
 }
 .box__img{
     display: flex;
@@ -20,6 +34,7 @@
     height: 60px;
     border-radius: 50%;
     background: rgba(128, 128, 128, 0.327);
+    margin-right: 10px;
 }
 .section__conta{
     padding-left: 15px;
@@ -41,7 +56,7 @@
     align-items: center;
     width: 50px;
     height: 50px;
-    border-radius: 50%;
+    border-radius: 20px;
     background: rgba(128, 128, 128, 0.538);
 }
 .icon__PiPixLogo{
@@ -50,4 +65,75 @@
 }
 .icon__LuUserRound{
     font-size: 30px;
+}
+.name__user{
+    font-weight: 400;
+}
+.card__promo{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(128, 128, 128, 0.416);
+    width: 350px;
+    height: 150px;
+    padding: 8px;
+    border-radius: 20px;
+    margin-top: 30px;
+}
+.icon__GoGift{
+    font-size: 50px;
+    color: #530082;
+}
+.text__gift{
+    text-align: center;
+    font-size: 14px;
+    color: gray;
+    margin-top: 5px;
+}
+.box__icon__FaArrowRight{
+    margin-top: 25px;
+    width: 100%;
+    display: flex;
+    justify-content: end;
+    padding-right: 5px;
+}
+.icon__FaArrowRight{
+    font-size: 25px;
+    color: #530082;
+}
+
+.section__transacao{
+    overflow-y: scroll;
+    overflow-x: hidden;
+    height: 480px;
+    width: 450px;
+}
+
+.section__transacao::-webkit-scrollbar {
+    width: 5px;
+}
+.section__transacao::-webkit-scrollbar-thumb {
+    background: #530082; 
+    border-radius: 5px;
+}
+.section__transacao::-webkit-scrollbar-thumb:hover {
+    background: #f6f6f6; 
+}
+.card__transferencia{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(128, 128, 128, 0.416);
+    width: 390px;
+    height: 150px;
+    padding: 8px;
+    border-radius: 10px;
+    margin-top: 30px;
+    box-shadow: inset;
+}
+.header__transacao{
+    color: black;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
 }

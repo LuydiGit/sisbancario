@@ -1,0 +1,18 @@
+.container__sucess__transation{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100dvh;
+    flex-direction: column;
+}
+.box__icon__and__text{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+}
+.icon__FaRegCheckCircle2{
+    font-size: 180px;
+    color: #168200;
+}

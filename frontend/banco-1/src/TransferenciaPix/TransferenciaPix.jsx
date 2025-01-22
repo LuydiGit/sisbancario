@@ -14,6 +14,12 @@ function TransferenciaPix () {
 
     const navigate = useNavigate();
 
+    const userData = localStorage.getItem('userData');
+    //trasnformando os dados para JSON
+    const userInformation = JSON.parse(userData);
+    //Fromatando cada letra inicial do nome do usuário para caixa-alta
+    const clientId = userInformation.id;
+
     const [pixKey, setPixKey] = useState(false);
     const [message, setMessage] = useState('')
     const [showInputPixKey, setShowInputPixKey] = useState(false)
@@ -26,8 +32,6 @@ function TransferenciaPix () {
     const [erroRequest, setErroRequest] = useState(false)
     const [valorIncorreto, setValorIncorreto] = useState(false)
     const [sucessRequest, setSucessRequest] = useState(false)
-
-    const clientId = 11;
 
     const navigateToHome = () =>{
         navigate('/Home')
@@ -144,9 +148,14 @@ function TransferenciaPix () {
               }, 3000);
         })
     }
-    console.log(valorIncorreto)
+    
     return (
         <div className='container__main'>
+            <div className="menu__nav">
+                <div className='header__main' style={{paddingBottom: '35px'}}>
+                    <h2 style={{color: '#fff'}}>Banco One</h2>
+                </div>
+            </div>
             <div className='section__main'>
                 <div className='header__main__area__pix' style={{height: '125px', border: 'none'}}>
                     {sucessRequest ? (

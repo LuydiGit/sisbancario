@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 21/01/2025 às 20:39
+-- Tempo de geração: 22/01/2025 às 19:38
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -33,6 +33,14 @@ CREATE TABLE `bancos` (
   `url_api` varchar(255) NOT NULL,
   `token` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `bancos`
+--
+
+INSERT INTO `bancos` (`id`, `name`, `url_api`, `token`) VALUES
+(1, 'Banco One', 'http://localhost:5001', 'TOKENBANCOONE'),
+(2, 'Banco Two', 'http://localhost:5002', 'TOKENBANCOTWO');
 
 -- --------------------------------------------------------
 
@@ -75,13 +83,13 @@ ALTER TABLE `chaves_pix`
 -- AUTO_INCREMENT de tabela `bancos`
 --
 ALTER TABLE `bancos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `chaves_pix`
 --
 ALTER TABLE `chaves_pix`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- Restrições para tabelas despejadas

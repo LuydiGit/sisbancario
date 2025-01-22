@@ -17,6 +17,12 @@ function AreaPix () {
 
     const navigate = useNavigate();
     
+    const userData = localStorage.getItem('userData');
+    //trasnformando os dados para JSON
+    const userInformation = JSON.parse(userData);
+    //Fromatando cada letra inicial do nome do usuário para caixa-alta
+    const clientId = userInformation.id;
+
     const [showInputsChavePix, setShowInputsChavePix] = useState(false);
     const [typePixKey, setTypePixKey] = useState(false);
     const [pixKey, setPixKey] = useState(false);
@@ -28,8 +34,6 @@ function AreaPix () {
     const [showBtnDeletePixKey, setShowBtnDeletePixKey] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [chaveCopiada, setChaveCopiada] = useState(false);
-
-    const clientId = 11;
 
     const navigateToTransferenciaPix = () =>{
         navigate('/TransferenciaPix')
@@ -127,8 +131,14 @@ function AreaPix () {
               }, 3000);
         })
     }
+
     return (
         <div className='container__main'>
+            <div className="menu__nav">
+                <div className='header__main' style={{paddingBottom: '35px'}}>
+                    <h2 style={{color: '#fff'}}>Banco One</h2>
+                </div>
+            </div>
             <div className='section__main'>
                 <div className='header__main__area__pix'>
                     <div className="box__close__and__question">
@@ -226,7 +236,7 @@ function AreaPix () {
                                 ):(
                                     <div className="box__btn__add__chave__pix" onClick={createNewPixKey}>
                                         <button className={` ${newTypePixKey && newPixKey ? 'btn__show__add__chave__pix':'btn__add__chave__pix'}`}>
-                                            Cradastar chave pix
+                                            Cadastrar chave pix
                                         </button>
                                     </div>
                                 )}
@@ -251,7 +261,7 @@ function AreaPix () {
                     {(!showInputsChavePix && !showBtnDeletePixKey) && (!typePixKey && !pixKey) &&(
                         <div className="box__btn__add__chave__pix" onClick={showInputs}>
                             <button className="btn__show__add__chave__pix">
-                                Cradastar chave pix
+                                Cadastrar chave pix
                             </button>
                         </div>
                     )}
