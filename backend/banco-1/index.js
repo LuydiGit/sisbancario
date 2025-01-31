@@ -36,27 +36,46 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
-//Route to create a new client OK
-app.post('/api/v1/cliente', (req, res) => {
+// Rota para criar um novo cliente
+app.post('/api/v1/cliente', async (req, res) => {
   const { name, cpf, data_nascimento, email, celular, senha } = req.body;
 
+  // Validação dos campos obrigatórios
   if (!name || !cpf || !data_nascimento || !email || !celular || !senha) {
-    return res.status(400).send("Todos os campos são obrigatórios.");
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
   }
 
-  const sql = `INSERT INTO clientes (nome, cpf, data_nascimento, email, celular, senha) VALUES (?, ?, ?, ?, ?, ?)`;
-  const values = [name, cpf, data_nascimento, email, celular, senha];
+  try {
+    // Verifica se o cliente já existe
+    const clienteExistenteQuery = `SELECT id FROM clientes WHERE cpf = ?`;
+    const [clienteExistente] = await db.promise().query(clienteExistenteQuery, [cpf]);
 
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.error("Erro ao inserir dados:", err);
-      return res.status(500).send("Erro no servidor");
+    if (clienteExistente.length > 0) {
+      return res.status(409).json({ error: "Cliente já cadastrado." });
     }
-    if(result){
-      return res.status(200).send("Cadastro realizado com sucesso.");
-    }
-  });
 
+    // Insere o cliente na tabela 'clientes'
+    const sqlInsertCliente = `
+      INSERT INTO clientes (nome, cpf, data_nascimento, email, celular, senha) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    const values = [name, cpf, data_nascimento, email, celular, senha];
+    const [result] = await db.promise().query(sqlInsertCliente, values);
+
+    // Insere saldo inicial na tabela 'contas'
+    const clienteID = result.insertId;
+    const sqlInsertSaldo = `
+      INSERT INTO contas (cliente_id, saldo) 
+      VALUES (?, ?)
+    `;
+    await db.promise().query(sqlInsertSaldo, [clienteID, 100]);
+
+    return res.status(201).json({ message: "Cadastro realizado com sucesso." });
+
+  } catch (error) {
+    console.error("Erro ao processar solicitação:", error);
+    return res.status(500).json({ error: "Erro no servidor. Por favor, tente novamente mais tarde." });
+  }
 });
 
 // Rota para login de cliente
@@ -70,8 +89,8 @@ app.post('/api/v1/login', async (req, res) => {
 
   try {
     // Consulta ao banco para verificar o cliente pelo e-mail
-    const sql = `SELECT id, nome, senha FROM clientes WHERE email = ?`;
-    const [rows] = await db.promise().query(sql, [email]);
+    const sql = `SELECT id, nome, senha FROM clientes WHERE email = ? AND senha = ?`;
+    const [rows] = await db.promise().query(sql, [email, senha]);
 
     if (rows.length === 0) {
       return res.status(401).send("E-mail ou senha inválidos.");
@@ -94,7 +113,7 @@ app.get('/api/v1/pixKey/:clientId', async (req, res) =>{
   try {
     // Obten a chave pix do cliente
     const sql = `
-      SELECT chave_pix, tipo_chave_pix FROM contas WHERE cliente_id = ?;
+      SELECT chave, tipo_chave FROM chave_pix WHERE cliente_id = ?;
     `;
     const resultPixKey = await new Promise((resolve, reject) => {
       db.query(sql, [clientId], (err, results) => {
@@ -122,7 +141,7 @@ app.get('/api/v1/saldo/:clientId', async (req, res) =>{
   try {
     // Obten a chave pix do cliente
     const sql = `
-      SELECT id, saldo, chave_pix FROM contas WHERE cliente_id = ?;
+      SELECT id, saldo FROM contas WHERE cliente_id = ?;
     `;
     const resultPixKey = await new Promise((resolve, reject) => {
       db.query(sql, [clientId], (err, results) => {
@@ -174,6 +193,14 @@ app.get('/api/v1/searchClientByPixKey/:pixKey', async (req, res) => {
   const { pixKey } = req.params;
 
   try {
+    // Obter IDs do banco e cliente associado à chave Pix
+    const verifyChavePix = `SELECT chave FROM chave_pix WHERE chave = ?`;
+    const [existingChavePix] = await db.promise().query(verifyChavePix, [pixKey]);
+
+    if (existingChavePix.length > 0) {
+      return res.status(409).json({ message: "Opa! Não dá para transferir para sua própria conta." });
+    }
+
     // Requisição ao Banco Central para obter dados do cliente destinatário
     const response = await axios.get(`http://localhost:5003/api/v1/cliente/${pixKey}`);
     const dataClientResponse = response.data;
@@ -217,16 +244,16 @@ app.get('/api/v1/client/:clientId', async (req, res) => {
 
 // Route to create a new Pix key OK
 app.post('/api/v1/pixKey', async (req, res) => {
-  const { bancoId, clientId, saldo, chavePix, tipo_chave_pix } = req.body;
+  const { bancoId, clientId, chavePix, tipo_chave_pix } = req.body;
 
   // Validação dos campos obrigatórios
-  if (!bancoId || !clientId || !saldo || !chavePix || !tipo_chave_pix) {
+  if (!bancoId || !clientId || !chavePix || !tipo_chave_pix) {
     return res.status(400).json({ message: "Todos os campos são obrigatórios" });
   }
 
   try {
     // Verifica se a chave Pix já existe no banco do cliente
-    const checkPixSqlContas = `SELECT * FROM contas WHERE chave_pix = ?`;
+    const checkPixSqlContas = `SELECT * FROM chave_pix WHERE chave = ?`;
     const [existingPixContas] = await db.promise().query(checkPixSqlContas, [chavePix]);
 
     if (existingPixContas.length > 0) {
@@ -242,10 +269,10 @@ app.post('/api/v1/pixKey', async (req, res) => {
 
     // Insere os dados na tabela 'contas'
     const sqlInsertContas = `
-      INSERT INTO contas (cliente_id, saldo, chave_pix, tipo_chave_pix) 
-      VALUES (?, ?, ?, ?)
+      INSERT INTO chave_pix (cliente_id, chave, tipo_chave) 
+      VALUES (?, ?, ?)
     `;
-    await db.promise().query(sqlInsertContas, [clientId, saldo, chavePix, tipo_chave_pix]);
+    await db.promise().query(sqlInsertContas, [clientId, chavePix, tipo_chave_pix]);
 
     // Envia os dados para o Banco Central para registro da chave Pix
     const bankRegisterResponse = await axios.post('http://localhost:5003/api/v1/pixKey', {
@@ -285,7 +312,9 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
     }
 
     const saldoAtual = Number (saldoTotal[0].saldo)
-    const valorTransacaoFormatado = Number (valorTransacao.replace(/R\$\s?(\d+),(\d{2})/, '$1.$2'))
+    // Limpar o valor da transferência para garantir o formato correto
+    const valorNumerico = valorTransacao.replace(/[^\d,]/g, '').replace(',', '.');
+    const valorTransacaoFormatado = Number(valorNumerico);
 
     if(valorTransacaoFormatado > saldoAtual){
       return res.status(409).json({ message: "Saldo em conta é menor que o valor solicitado." });
@@ -389,7 +418,7 @@ app.delete('/api/v1/pixKey', async (req, res) => {
   try {
     // Deleta a chave Pix da tabela 'contas'
     const deletePixSqlContas = `
-      DELETE FROM contas WHERE chave_pix = ?
+      DELETE FROM chave_pix WHERE chave = ?
     `;
     await db.promise().query(deletePixSqlContas, [chavePix]);
 

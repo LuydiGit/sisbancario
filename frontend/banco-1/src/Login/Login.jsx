@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { VscError } from "react-icons/vsc";
 
 import axios from 'axios';
 
@@ -18,6 +19,15 @@ function Login() {
         navigate('/CreateClient')
     }
   
+    // Função para validar o e-mail
+    const validedEmail = (email) => {
+        // Expressão regular para validar o formato do e-mail
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    }
+
+    let isValidEmail = validedEmail(email)
+
     const login = () =>{
         setIsLoading(true)
 
@@ -37,7 +47,7 @@ function Login() {
                 setMessage('');
                 setSucessRequest(false)
                 setIsLoading(false)
-                navigate("/Home");
+                navigate("/HomeCliente");
               }, 3000);
         })
         .catch(err =>{
@@ -84,7 +94,18 @@ function Login() {
                     </div>
                     
                 ):(
-                    <button className="button-submit" onClick={login}>Entrar</button>
+                    <>
+                        {isValidEmail &&(
+                            <button className="button-submit" onClick={login}>Entrar</button>
+                        )}
+                        {email.length > 0 && !isValidEmail &&(
+                            <div className="message__erro">
+                                <VscError className="icon__VscError"/>
+                                <p >O e-mail informado não é válido!</p>
+                            </div>
+                        )}
+                    </>
+                    
                 )}
                 
 

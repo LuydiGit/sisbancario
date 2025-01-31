@@ -36,26 +36,6 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 
-//Route to verify if pix key exists
-app.get('/api/v1/pixKey/:pixKey', async (req, res) => {
-  const { pixKey } = req.params;
-
-  try {
-    // Verifica se a chave Pix já está cadastrada
-    const checkPixSqlBC = `SELECT * FROM chaves_pix WHERE chave = ?`;
-    const [existingPixBC] = await db_bc.promise().query(checkPixSqlBC, [pixKey]);
-
-    if (existingPixBC.length > 0) {
-      return res.status(409).json({ message: "A chave Pix já está cadastrada no Banco Central." });
-    }
-
-    return res.status(200).json({ message: "Cadastro autorizado." });
-  } catch (error) {
-    console.error("Erro ao processar a requisição:", error);
-    res.status(500).json({ message: "Erro interno no servidor." });
-  }
-});
-
 
 async function getDataRecipient(pixKey) {
   
@@ -67,13 +47,12 @@ async function getDataRecipient(pixKey) {
     if (existingIDs.length === 0) {
       throw new Error("Chave Pix não encontrada no Banco Central.");
     }
-
     const { banco_id: bancoId, cliente_id: clienteId } = existingIDs[0];
 
     // Obter a URL da API do banco destinatário
     const selectUrlApiBank = `SELECT name, url_api FROM bancos WHERE id = ? LIMIT 1`;
     const [urlAPI] = await db_bc.promise().query(selectUrlApiBank, [bancoId]);
-
+    
     if (urlAPI.length === 0) {
       throw new Error("Banco destinatário não encontrado no sistema.");
     }
@@ -107,11 +86,30 @@ function getCurrentTimestamp() {
   return `${day}-${month}-${year}-${hours}:${minutes}`;
 }
 
+//Route to verify if pix key exists
+app.get('/api/v1/pixKey/:pixKey', async (req, res) => {
+  const { pixKey } = req.params;
+
+  try {
+    // Verifica se a chave Pix já está cadastrada
+    const checkPixSqlBC = `SELECT * FROM chaves_pix WHERE chave = ?`;
+    const [existingPixBC] = await db_bc.promise().query(checkPixSqlBC, [pixKey]);
+
+    if (existingPixBC.length > 0) {
+      return res.status(409).json({ message: "A chave Pix já está cadastrada no Banco Central." });
+    }
+
+    return res.status(200).json({ message: "Cadastro autorizado." });
+  } catch (error) {
+    console.error("Erro ao processar a requisição:", error);
+    res.status(500).json({ message: "Erro interno no servidor." });
+  }
+});
 
 //Route to get recipient client data
 app.get('/api/v1/cliente/:pixKey', async (req, res) => {
   const { pixKey } = req.params;
-
+  
   try {
     // Chama a função para buscar os dados
     const { bancoName, bancoApiUrl, clienteId } = await getDataRecipient(pixKey);
@@ -162,6 +160,7 @@ app.post('/api/v1/pixKey', async (req, res) => {
   }
 });
 
+//Function to do pix transfer
 app.put('/api/v1/transferenciaPix', async (req, res) =>{
   const { valor, chavePix } = req.body;
 
@@ -207,6 +206,8 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
     res.status(500).json({ message: "Erro interno no servidor." });
   }
 })
+
+//Function to delete pix key
 app.delete('/api/v1/pixKey', async (req, res) => {
   const { chavePix } = req.query;
 

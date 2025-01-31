@@ -34,7 +34,7 @@ function TransferenciaPix () {
     const [sucessRequest, setSucessRequest] = useState(false)
 
     const navigateToHome = () =>{
-        navigate('/Home')
+        navigate('/HomeCliente')
     }
 
     const navigateToAreaPix = () =>{
@@ -114,14 +114,16 @@ function TransferenciaPix () {
 
     const validarValorTransferencia = () =>{
         const saldoAtual = Number (saldo)
-        const valorTransferencia = Number (valor.replace(/R\$\s?(\d+),(\d{2})/, '$1.$2'))
-
+        // Limpar o valor da transferência para garantir o formato correto
+        const valorNumerico = valor.replace(/[^\d,]/g, '').replace(',', '.');
+        const valorTransferencia = Number(valorNumerico);
         if(valorTransferencia > saldoAtual){
             setMessage('Saldo insuficiente para essa transação.')
             return setValorIncorreto(true)
         }
         return setValorIncorreto(false)
     }
+    
     useEffect(() =>{
         validarValorTransferencia()
     }, [valor])

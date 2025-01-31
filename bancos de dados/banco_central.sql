@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 22/01/2025 às 19:38
+-- Tempo de geração: 31/01/2025 às 00:30
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -89,7 +89,7 @@ ALTER TABLE `bancos`
 -- AUTO_INCREMENT de tabela `chaves_pix`
 --
 ALTER TABLE `chaves_pix`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- Restrições para tabelas despejadas

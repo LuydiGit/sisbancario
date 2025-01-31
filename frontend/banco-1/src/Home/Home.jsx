@@ -40,14 +40,10 @@ function Home () {
      const consultarTransacoes = (contaId) =>{
         axios.get(`http://localhost:5001/api/v1/transacoes/${contaId}`)
         .then(res => {
-            console.log(res)
             setObjectTransacao(res.data.result)
         })
         .catch(err =>{
             console.log(err)
-            return setTimeout(() => {
-                setMessage('');
-              }, 3000);
         })
     }
 
@@ -57,7 +53,6 @@ function Home () {
         .then(res => {
             console.log(res)
             setSaldo(res.data.result[0].saldo);
-            setChavePix(res.data.result[0].chave_pix)
             consultarTransacoes(res.data.result[0].id)
         })
         .catch(err =>{
@@ -71,7 +66,7 @@ function Home () {
     useEffect(() =>{
         consultarSaldo()
     }, [])
-    
+   
     return (
         <div className='container__main'>
             <div className="menu__nav">
@@ -96,17 +91,6 @@ function Home () {
                     </div>
                     <p style={{color: 'black'}}>Área Pix</p>
                 </div>
-                {!chavePix ? (
-                    <div className="card__promo" onClick={navigateToAreaPix}>
-                        <GoGift className="icon__GoGift" />
-                        <p className="text__gift">
-                            Adicione seu CPF, Email ou celuar como sua primeira chave pix e ganhe R$ 100,00 de bônus.
-                        </p>
-                        <div className="box__icon__FaArrowRight">
-                            <FaArrowRight className="icon__FaArrowRight"/>
-                        </div>
-                    </div>
-                ):(
                     <div className="section__transacao">
                     <h3 style={{color: 'black', marginTop: '25px', marginLeft: '10px'}}>Transações</h3>
                         {objectTransacao.length > 0 ?(
@@ -146,7 +130,6 @@ function Home () {
                         </>
                         )}
                     </div>
-                )}
             </div>
             
         </div>

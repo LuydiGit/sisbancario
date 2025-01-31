@@ -15,7 +15,7 @@ function App() {
 
           <Route path="/" element={<Login />} />
           <Route path="/CreateClient" element={<CreateClient />} />
-          <Route path="/Home" element={<Home />} />
+          <Route path="/HomeCliente" element={<Home />} />
           <Route path="/AreaPix" element={<AreaPix />} />
           <Route path="/TransferenciaPix" element={<TransferenciaPix />} />
 

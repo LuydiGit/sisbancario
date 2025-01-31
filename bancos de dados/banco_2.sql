@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 22/01/2025 às 19:38
+-- Tempo de geração: 31/01/2025 às 00:30
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -24,13 +24,26 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `chave_pix`
+--
+
+CREATE TABLE `chave_pix` (
+  `id` int(11) NOT NULL,
+  `cliente_id` int(11) NOT NULL,
+  `chave` varchar(200) NOT NULL,
+  `tipo_chave` varchar(200) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `clientes`
 --
 
 CREATE TABLE `clientes` (
   `id` int(11) NOT NULL,
   `nome` varchar(100) NOT NULL,
-  `cpf` varchar(11) NOT NULL,
+  `cpf` varchar(20) NOT NULL,
   `data_nascimento` varchar(20) NOT NULL,
   `email` varchar(100) NOT NULL,
   `celular` varchar(20) NOT NULL,
@@ -46,9 +59,7 @@ CREATE TABLE `clientes` (
 CREATE TABLE `contas` (
   `id` int(11) NOT NULL,
   `cliente_id` int(11) NOT NULL,
-  `saldo` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `chave_pix` varchar(100) NOT NULL,
-  `tipo_chave_pix` varchar(100) NOT NULL
+  `saldo` decimal(10,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -74,6 +85,12 @@ CREATE TABLE `transacoes` (
 --
 
 --
+-- Índices de tabela `chave_pix`
+--
+ALTER TABLE `chave_pix`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `clientes`
 --
 ALTER TABLE `clientes`
@@ -97,22 +114,28 @@ ALTER TABLE `transacoes`
 --
 
 --
+-- AUTO_INCREMENT de tabela `chave_pix`
+--
+ALTER TABLE `chave_pix`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT de tabela `clientes`
 --
 ALTER TABLE `clientes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de tabela `contas`
 --
 ALTER TABLE `contas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de tabela `transacoes`
 --
 ALTER TABLE `transacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- Restrições para tabelas despejadas
