@@ -188,7 +188,7 @@ app.get('/api/v1/transacoes/:contaId', async (req, res) =>{
   }
 })
 
-//Route to search pix key to send money
+//Rota para pesquisar a chave pix para enviar dinheiro
 app.get('/api/v1/searchClientByPixKey/:pixKey', async (req, res) => {
   const { pixKey } = req.params;
 
@@ -222,7 +222,7 @@ app.get('/api/v1/searchClientByPixKey/:pixKey', async (req, res) => {
   }
 });
 
-//Route to get client data
+//Rota para obter dados do cliente
 app.get('/api/v1/client/:clientId', async (req, res) => {
   const { clientId } = req.params;
 
@@ -242,7 +242,7 @@ app.get('/api/v1/client/:clientId', async (req, res) => {
   }
 });
 
-// Route to create a new Pix key OK
+//Rota para criar uma nova chave Pix OK
 app.post('/api/v1/pixKey', async (req, res) => {
   const { bancoId, clientId, chavePix, tipo_chave_pix } = req.body;
 
@@ -362,7 +362,7 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
   }
 })
 
-//Route to receive pix transfer
+//Rota para receber transferência de pix
 app.put('/api/v1/receiveTransfer', async (req, res) =>{
   const { valor, cliente_recebedor_id, chavePix, transactionId, timestamp } = req.body;
 
@@ -406,7 +406,7 @@ app.put('/api/v1/receiveTransfer', async (req, res) =>{
   }
 })
 
-// Route to delete Pix key OK
+//Rota para excluir chave Pix OK
 app.delete('/api/v1/pixKey', async (req, res) => {
   const { chavePix } = req.query;
 

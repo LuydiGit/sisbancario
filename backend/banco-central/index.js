@@ -86,7 +86,7 @@ function getCurrentTimestamp() {
   return `${day}-${month}-${year}-${hours}:${minutes}`;
 }
 
-//Route to verify if pix key exists
+//Rota para verificar se existe chave pix
 app.get('/api/v1/pixKey/:pixKey', async (req, res) => {
   const { pixKey } = req.params;
 
@@ -106,7 +106,7 @@ app.get('/api/v1/pixKey/:pixKey', async (req, res) => {
   }
 });
 
-//Route to get recipient client data
+//Rota para obter dados do cliente destinatário
 app.get('/api/v1/cliente/:pixKey', async (req, res) => {
   const { pixKey } = req.params;
   
@@ -141,7 +141,7 @@ app.get('/api/v1/cliente/:pixKey', async (req, res) => {
   }
 });
 
-//Route to add pix key
+//Rota para adicionar chave pix
 app.post('/api/v1/pixKey', async (req, res) => {
   const { bancoId, clientId, chavePix, tipo_chave_pix } = req.body;
 
@@ -160,7 +160,7 @@ app.post('/api/v1/pixKey', async (req, res) => {
   }
 });
 
-//Function to do pix transfer
+//Função para fazer transferência de pix
 app.put('/api/v1/transferenciaPix', async (req, res) =>{
   const { valor, chavePix } = req.body;
 
@@ -207,7 +207,7 @@ app.put('/api/v1/transferenciaPix', async (req, res) =>{
   }
 })
 
-//Function to delete pix key
+//Função para excluir chave pix
 app.delete('/api/v1/pixKey', async (req, res) => {
   const { chavePix } = req.query;
 

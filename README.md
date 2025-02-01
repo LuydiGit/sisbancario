@@ -93,4 +93,4 @@ O sistema deve suportar a existência de duas ou mais instâncias do App Cliente
     
     9.3 banco_3;
 
-10. Tutorial de como executar na sua máquia: 
+10. Tutorial de como executar na sua máquia: https://www.youtube.com/watch?v=FiwX78rdnf0
